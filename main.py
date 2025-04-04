@@ -82,6 +82,8 @@ try:
         
         # Click in the center of the screen as fallback
         window_size = driver.get_window_size()
+        window_width = window_size['width']
+        window_height = window_size['height']
         action = ActionChains(driver)
         action.move_by_offset(int(window_width * 0.5), int(window_height * 0.5)).click().perform()
         print("Clicked center of screen")
@@ -198,4 +200,4 @@ finally:
     driver.save_screenshot("final_state.png")
     print("Script completed")
     # Keep browser open for inspection
-    # driver.quit()
+    driver.quit()
