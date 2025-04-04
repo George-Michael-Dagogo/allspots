@@ -6,6 +6,7 @@ from selenium.webdriver import Chrome, ChromeOptions as Options
 from selenium.webdriver.chrome.service import Service
 from fake_useragent import UserAgent
 import time
+from selenium import webdriver
 
 url = 'https://allslots.ro/'
 options = Options()
