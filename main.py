@@ -8,6 +8,8 @@ from fake_useragent import UserAgent
 import time
 from selenium import webdriver
 
+print('Lets click that star')
+
 url = 'https://allslots.ro/'
 options = Options()
 options.add_argument("--disable-popup-blocking")
