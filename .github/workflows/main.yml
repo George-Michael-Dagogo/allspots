@@ -29,7 +29,7 @@ jobs:
     - name: Install ChromeDriver
       run: |
         # Using specific ChromeDriver version for Chrome 134
-        CHROMEDRIVER_VERSION="134.0.6998.88"
+        CHROMEDRIVER_VERSION="135.0.7049.42"
         echo "Installing ChromeDriver version: $CHROMEDRIVER_VERSION"
         wget -q "https://edgedl.me.gvt1.com/edgedl/chrome/chrome-for-testing/$CHROMEDRIVER_VERSION/linux64/chromedriver-linux64.zip"
         unzip chromedriver-linux64.zip
