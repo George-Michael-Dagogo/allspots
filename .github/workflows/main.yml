@@ -4,7 +4,7 @@ name: Run Selenium Bet clicker
 on:
   workflow_dispatch:
   schedule:
-    - cron: "*/10 * * * *"  # Runs every 3 hours
+    - cron: "*/6 * * * *"  # Runs every 3 hours
 
 jobs:
   scrape:
