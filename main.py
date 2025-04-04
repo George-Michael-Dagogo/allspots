@@ -31,9 +31,9 @@ options.add_experimental_option('useAutomationExtension', False)
 ua = UserAgent()
 user_agent = ua.random
 options.add_argument(f'user-agent={user_agent}')
-
-service = Service(r'C:\Users\H i - G E O R G E\Documents\Airbnb Add App\chromedriver.exe')
-driver = Chrome(service=service, options=options)
+service = Service('/usr/local/bin/chromedriver')
+#service = Service(r'C:\Users\H i - G E O R G E\Documents\Airbnb Add App\chromedriver.exe')
+driver = webdriver.Chrome(options=options)
 
 # Crucial: Execute this script to mask headless mode detection
 driver.execute_cdp_cmd('Network.setUserAgentOverride', {
