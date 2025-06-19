@@ -3,6 +3,7 @@ from bs4 import BeautifulSoup
 from fake_useragent import UserAgent
 import pandas as pd
 import os
+import psycopg2
 
 
 # %%
@@ -71,10 +72,10 @@ for box in blog_box:
 df = pd.DataFrame({
     'Link': links,
     'Title': titles,
-    'Time Uploaded': time_uploaded,
-    'Author': authors,
+    'Time_Uploaded': time_uploaded,
+    'Authors': authors,
     'Tags': tags,
-    'Reading Time': reading_times
+    'Reading_Time': reading_times
 })
 
 df_cleaned = df[df['Link'] != 'None']
@@ -109,19 +110,18 @@ for i in df_cleaned.Link:
 
 
 article_df = pd.DataFrame({
-    'Article Content': article,
+    'Article_Content': article,
     'Link': article_link
 })
 
 
 merged_df = pd.merge(df_cleaned, article_df, on='Link', how='inner')
-merged_df
 
-from nltk.corpus import stopwords
+
+from nltk.corpus import stopwords 
 import nltk
 from nltk.sentiment.vader import SentimentIntensityAnalyzer
 
-df = merged_df
 # Download the stopwords dataset
 nltk.download('stopwords')
 nltk.download('punkt')
@@ -139,8 +139,7 @@ def count_words_without_stopwords(text):
     else:
         0
 
-df['Word_Count'] = df['Article_Content'].apply(count_words_without_stopwords)
-
+merged_df['Word_Count'] = merged_df['Article_Content'].apply(count_words_without_stopwords)
 
 sid = SentimentIntensityAnalyzer()
 
@@ -157,14 +156,8 @@ def get_sentiment(row):
 
     return sentiment, compound_score
 
-df[['Sentiment', 'Compound_Score']] = df['Article_Content'].astype(str).apply(lambda x: pd.Series(get_sentiment(x)))
+merged_df[['Sentiment', 'Compound_Score']] = merged_df['Article_Content'].astype(str).apply(lambda x: pd.Series(get_sentiment(x)))
 
-df
-
-# %% [markdown]
-# ## Detecting the Language of each Article Content
-
-# %%
 import pandas as pd
 import langid
 import pycountry
@@ -178,6 +171,50 @@ def detect_language(text):
     lang, confidence = langid.classify(text)
     return lang
 
-df['Language'] = df['Article_Content'].apply(detect_language)
-df['Language'] = df['Language'].map(lambda code: pycountry.languages.get(alpha_2=code).name if pycountry.languages.get(alpha_2=code) else code)
-df
+merged_df['Language'] = merged_df['Article_Content'].apply(detect_language)
+merged_df['Language'] = merged_df['Language'].map(lambda code: pycountry.languages.get(alpha_2=code).name if pycountry.languages.get(alpha_2=code) else code)
+merged_df['Reading_Time'] = merged_df['Reading_Time'].str.replace(' min read', '', regex=False).str.strip().astype(int)
+merged_df
+
+
+db_params = {
+    "dbname": "postgres",
+    "user": os.getenv("DB_USER"),
+    "password": os.getenv("DB_PASSWORD"),
+    "host": os.getenv("DB_HOST"),
+    "port": "5432"
+}
+
+
+
+try:
+    # Connect to PostgreSQL
+    conn = psycopg2.connect(**db_params)
+    cursor = conn.cursor()
+    
+    # SQL Insert Query
+    insert_query = """
+    INSERT INTO articles (Link, Title, Time_Uploaded, Authors, Tags, Reading_Time, Article_Content, Word_Count, Sentiment, Compound_Score, Language)
+    VALUES (%s, %s, %s, %s, %s, %s, %s,%s, %s, %s, %s)
+    ON CONFLICT (Link) DO NOTHING;  -- Avoids duplicate primary key errors
+    """
+    
+    # Insert DataFrame records one by one
+    for _, row in merged_df.iterrows():
+        cursor.execute(insert_query, (
+            row['Link'], row['Title'], row['Time_Uploaded'],  row['Authors'], row['Tags'], row['Reading_Time'],
+            row['Article_Content'],row['Word_Count'],row['Sentiment'],row['Compound_Score'],row['Language']
+        ))
+
+    # Commit and close
+    conn.commit()
+    print("Data inserted successfully!")
+
+except Exception as e:
+    print(e)
+
+finally:
+    if conn:
+        cursor.close()
+        conn.close
+
